@@ -621,6 +621,11 @@ details.s-card[open] > summary { border-bottom: 1px solid var(--line); }
   color: var(--muted);
   font-size: 11.5px;
 }
+.screen-status-sub.error {
+  color: var(--danger);
+  line-height: 1.4;
+  margin-top: 2px;
+}
 .screen-metrics {
   display: grid;
   grid-template-columns: repeat(4, 1fr);

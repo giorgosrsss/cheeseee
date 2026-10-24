@@ -35,6 +35,7 @@ contextBridge.exposeInMainWorld('api', {
     onRaw: on('engine:raw'),
   },
   screen: {
+    access: () => ipcRenderer.invoke('screen:access'),
     getSources: () => ipcRenderer.invoke('screen:sources'),
     setPreferredSource: (id) => ipcRenderer.invoke('screen:setPreferredSource', id),
     captureSnapshot: (sourceId) => ipcRenderer.invoke('screen:captureSnapshot', sourceId),

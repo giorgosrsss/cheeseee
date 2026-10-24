@@ -16,7 +16,9 @@ export function renderScreenTab(container, S, onSettingChange) {
         <div class="screen-pulse-dot ${isWatching ? 'active' : ''}"></div>
         <div class="screen-status-title">
           <div class="screen-status-main">${isWatching ? 'Watching Screen' : 'Screen Watch Stopped'}</div>
-          <div class="screen-status-sub">${st.boardFound ? `Board detected (${st.confidence}% confidence)` : (isWatching ? 'Scanning for chessboard on screen…' : 'Press Play or Start to watch your screen')}</div>
+          ${st.error && !isWatching
+            ? `<div class="screen-status-sub error">${st.error}</div>`
+            : `<div class="screen-status-sub">${st.boardFound ? `Board detected (${st.confidence}% confidence)` : (isWatching ? 'Scanning for chessboard on screen…' : 'Press Play or Start to watch your screen')}</div>`}
         </div>
       </div>
 
@@ -224,7 +226,12 @@ export function renderScreenTab(container, S, onSettingChange) {
   }
 }
 
+// Listing windows is slow (it grabs a thumbnail of each), and the Screen tab redraws on
+// every scan, so reuse the list for a few seconds.
+let sourcesFetchedAt = 0;
 export async function refreshScreenSources() {
+  if (Date.now() - sourcesFetchedAt < 5000) return;
+  sourcesFetchedAt = Date.now();
   if (api?.screen?.getSources) {
     try {
       sourcesList = await api.screen.getSources();

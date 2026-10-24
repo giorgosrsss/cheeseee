@@ -4,6 +4,7 @@
 // Optional: --arch arm64|x64 (macOS) to build for the other kind of Mac.
 const fs = require('fs');
 const path = require('path');
+const { execFileSync } = require('child_process');
 const { packager } = require('@electron/packager');
 const { ensureEngine } = require('./get-stockfish');
 const { BUILTIN_ENGINE_FILES, builtinEngineFile } = require('../src/main/builtin-engine');
@@ -72,6 +73,14 @@ async function removeOtherEngines({ buildPath, platform: target }) {
       /\.map$/,
     ],
   });
+  if (platform === 'darwin') {
+    // Packaging edits Electron's bundle, which breaks its signature. Re-sign it locally
+    // ("-" = ad-hoc, no Apple account needed) so macOS can remember permissions such as
+    // Screen Recording between launches instead of asking every time.
+    for (const dir of out) {
+      execFileSync('codesign', ['--force', '--deep', '--sign', '-', path.join(dir, 'Cheeseee.app')], { stdio: 'inherit' });
+    }
+  }
   console.log('Packaged to', out.join(', '));
 })().catch((err) => {
   console.error(err.message || err);

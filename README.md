@@ -54,13 +54,19 @@ choose **Quit**, or press Cmd+Q on a Mac.
 
 ### Notes for macOS
 
-- **Screen reading** needs permission. The first time you use it, macOS asks; allow Cheeseee in
-  System Settings → Privacy & Security → Screen Recording, then restart Cheeseee.
+- **Screen reading** needs Screen Recording permission. macOS asks once per launch the first time you use it.
+  Turn Cheeseee on in System Settings → Privacy & Security → Screen Recording, then quit and reopen Cheeseee.
+  Until then, the Screen tab shows these steps instead of asking again.
+- **Use the built app for screen reading.** With `npm start`, macOS asks on behalf of **Terminal**, and allowing
+  it would let anything you run in Terminal record your screen. Run `npm run package` and open `Cheeseee.app`
+  so the permission belongs to Cheeseee only.
+- After you rebuild the app, macOS may treat it as a new app. If Cheeseee is switched on in Screen Recording
+  but still blocked, remove it from the list with **–**, then open it and allow it again.
 - **Hotkeys:** `Ctrl` means the Control key and `Alt` means Option. You can rebind them in Settings.
 - **Above fullscreen apps:** macOS only lets a window float over fullscreen apps when the app has no Dock icon,
   so the "Aggressive" setting hides Cheeseee's Dock icon while it's on.
-- The app isn't signed by Apple. A Mac app you built yourself opens normally. If you copy it to another Mac,
-  right-click it and choose **Open** the first time.
+- The build is signed locally (ad-hoc), not by Apple. A Mac app you built yourself opens normally. If you copy it
+  to another Mac, right-click it and choose **Open** the first time.
 
 ## What it does
 

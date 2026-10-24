@@ -1,6 +1,6 @@
 const {
   app, BrowserWindow, ipcMain, globalShortcut, Tray, Menu, screen, dialog, clipboard, nativeImage,
-  desktopCapturer, session,
+  desktopCapturer, session, systemPreferences,
 } = require('electron');
 const path = require('path');
 const fs = require('fs');
@@ -8,6 +8,7 @@ const os = require('os');
 const { SettingsStore, deepMerge } = require('./settings');
 const { EngineManager } = require('./engine-manager');
 const { movePieceOnScreen, stopClicker, getCursorPos } = require('./mouse-automation');
+const { createScreenAccess } = require('./screen-access');
 
 const ROOT = path.join(__dirname, '..', '..');
 const IS_MAC = process.platform === 'darwin';
@@ -29,6 +30,14 @@ let engines = null;
 let quitting = false;
 let preferredScreenSourceId = null;
 const runtime = { clickThrough: false, failedHotkeys: [] };
+
+// Every screen capture checks this first (see screen-access.js).
+const screenAccess = createScreenAccess({
+  isMac: IS_MAC,
+  getStatus: () => systemPreferences.getMediaAccessStatus('screen'),
+  probe: () => desktopCapturer.getSources({ types: ['screen'], thumbnailSize: { width: 16, height: 16 } }),
+});
+const canCaptureScreen = async () => (await screenAccess()) === 'granted';
 
 function send(channel, payload) {
   if (win && !win.isDestroyed()) win.webContents.send(channel, payload);
@@ -59,6 +68,7 @@ function setupDisplayMediaHandler() {
   if (!session.defaultSession) return;
   session.defaultSession.setDisplayMediaRequestHandler(async (request, callback) => {
     try {
+      if (!(await canCaptureScreen())) return callback({});
       const sources = await desktopCapturer.getSources({ types: ['screen', 'window'] });
       let chosen = null;
       if (preferredScreenSourceId) {
@@ -513,8 +523,11 @@ function registerIpc() {
     try { await engines.sendRaw(String(cmd)); } catch (_) { /* status sent */ }
   });
 
+  ipcMain.handle('screen:access', () => screenAccess());
+
   ipcMain.handle('screen:sources', async () => {
     try {
+      if (!(await canCaptureScreen())) return [];
       const sources = await desktopCapturer.getSources({
         types: ['screen', 'window'],
         thumbnailSize: { width: 320, height: 180 },
@@ -539,6 +552,7 @@ function registerIpc() {
 
   ipcMain.handle('screen:captureSnapshot', async (_e, sourceId) => {
     try {
+      if (!(await canCaptureScreen())) return null;
       const primary = screen.getPrimaryDisplay();
       const scale = primary.scaleFactor || 1;
       const width = Math.round(primary.bounds.width * scale);

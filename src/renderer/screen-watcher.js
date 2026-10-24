@@ -66,6 +66,18 @@ function notifyError(err) {
   }
 }
 
+// Only macOS ever says no here (see src/main/screen-access.js).
+const MAC_PERMISSION_HELP = 'macOS is blocking screen capture. In System Settings → Privacy & Security → '
+  + 'Screen Recording, turn on Cheeseee (or Terminal, if you started it with npm start), then quit and reopen Cheeseee.';
+
+// Check before capturing: on macOS, each capture attempt without permission re-opens the system prompt.
+async function hasScreenAccess() {
+  const access = api?.screen?.access ? await api.screen.access() : 'granted';
+  if (access === 'granted') return true;
+  notifyError(Object.assign(new Error(MAC_PERMISSION_HELP), { short: 'macOS needs Screen Recording permission. See the Screen tab.' }));
+  return false;
+}
+
 function getCanvas(w, h) {
   if (!offscreenCanvas) {
     offscreenCanvas = document.createElement('canvas');
@@ -221,6 +233,7 @@ export const screenWatcher = {
 
   async start(settings = {}) {
     if (active) return;
+    if (!(await hasScreenAccess())) return;
     state.state = 'starting';
     state.error = null;
     notifyStatus();
@@ -347,6 +360,7 @@ export const screenWatcher = {
       ctx.drawImage(videoEl, 0, 0, vw, vh);
       img = canvas;
     } else {
+      if (!(await hasScreenAccess())) return null;
       img = await captureSnapshotImage(settings.sourceId);
     }
     if (!img) return null;

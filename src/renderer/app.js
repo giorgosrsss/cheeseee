@@ -1690,6 +1690,10 @@ async function init() {
   bindUi();
   bindEngine();
   screenWatcher.onPosition(onScreenPositionDetected);
+  screenWatcher.onError((err) => {
+    toast(err.short || err.message, 'error');
+    renderBest();
+  });
   screenWatcher.onStatus(() => {
     renderBest();
     if (document.querySelector('.tab-body.active')?.dataset.tab === 'screen') {
