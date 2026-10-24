@@ -8,6 +8,7 @@
     "watch": "node scripts/build.js --watch",
     "start": "node scripts/build.js && electron .",
     "icon": "node scripts/make-icon.js",
+    "engine": "node scripts/get-stockfish.js",
     "package": "node scripts/build.js && node scripts/package.js"
   },
   "author": "",

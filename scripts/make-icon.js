@@ -72,15 +72,17 @@ function sample(u, v) {
   return [r, g, b, 1];
 }
 
-function render(size) {
+// scale < 1 shrinks the tile toward the center (macOS icons leave a margin around it).
+function render(size, scale = 1) {
   const ss = size <= 32 ? 6 : 4;
   const buf = Buffer.alloc(size * size * 4);
+  const at = (t) => (t - 0.5) / scale + 0.5;
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
       let r = 0, g = 0, b = 0, a = 0;
       for (let sy = 0; sy < ss; sy++) {
         for (let sx = 0; sx < ss; sx++) {
-          const [cr, cg, cb, ca] = sample((x + (sx + 0.5) / ss) / size, (y + (sy + 0.5) / ss) / size);
+          const [cr, cg, cb, ca] = sample(at((x + (sx + 0.5) / ss) / size), at((y + (sy + 0.5) / ss) / size));
           r += cr * ca; g += cg * ca; b += cb * ca; a += ca;
         }
       }
@@ -115,10 +117,35 @@ function encodeIco(pngs) {
   return Buffer.concat([header, ...entries, ...pngs.map((p) => p.data)]);
 }
 
+// .icns is a list of [4-letter type, PNG] entries after an 8-byte header.
+function encodeIcns(entries) {
+  const parts = entries.map(([type, data]) => {
+    const head = Buffer.alloc(8);
+    head.write(type, 0, 'ascii');
+    head.writeUInt32BE(data.length + 8, 4);
+    return Buffer.concat([head, data]);
+  });
+  const head = Buffer.alloc(8);
+  head.write('icns', 0, 'ascii');
+  head.writeUInt32BE(8 + parts.reduce((n, p) => n + p.length, 0), 4);
+  return Buffer.concat([head, ...parts]);
+}
+
+// Apple's icon grid: an 824px tile on a 1024px canvas. Our tile fills 92% of its canvas.
+const MAC_SCALE = 824 / 1024 / 0.92;
+const ICNS_TYPES = [
+  ['icp4', 16], ['icp5', 32], ['ic11', 32], ['ic12', 64], ['ic07', 128],
+  ['ic08', 256], ['ic13', 256], ['ic09', 512], ['ic14', 512], ['ic10', 1024],
+];
+
 const out = path.join(__dirname, '..', 'assets');
 fs.mkdirSync(out, { recursive: true });
 const sizes = [16, 24, 32, 48, 64, 128, 256];
 const pngs = sizes.map((size) => ({ size, data: render(size) }));
 fs.writeFileSync(path.join(out, 'icon.png'), pngs.find((p) => p.size === 256).data);
 fs.writeFileSync(path.join(out, 'icon.ico'), encodeIco(pngs));
-console.log('Wrote assets/icon.png and assets/icon.ico');
+
+const macPngs = new Map();
+for (const [, size] of ICNS_TYPES) if (!macPngs.has(size)) macPngs.set(size, render(size, MAC_SCALE));
+fs.writeFileSync(path.join(out, 'icon.icns'), encodeIcns(ICNS_TYPES.map(([type, size]) => [type, macPngs.get(size)])));
+console.log('Wrote assets/icon.png, assets/icon.ico and assets/icon.icns');

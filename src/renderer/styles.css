@@ -180,7 +180,7 @@ button svg, .s-head svg { stroke: currentColor; fill: none; stroke-width: 2; str
   padding: 1px 8px;
   border-radius: 6px;
   background: var(--raised2);
-  font: 600 14px/1.5 "Cascadia Mono", Consolas, monospace;
+  font: 600 14px/1.5 "Cascadia Mono", Consolas, Menlo, monospace;
 }
 .best-eval.pos { color: var(--pos); }
 .best-eval.neg { color: var(--neg); }
@@ -254,7 +254,7 @@ coords.squares:nth-of-type(even) :nth-child(even) { color: var(--coord-on-dark);
   right: 0;
   bottom: 3px;
   text-align: center;
-  font: 700 8px/1 "Segoe UI", sans-serif;
+  font: 700 8px/1 "Segoe UI", system-ui, sans-serif;
   color: #222;
   z-index: 1;
   writing-mode: vertical-rl;
@@ -364,7 +364,7 @@ coords.squares:nth-of-type(even) :nth-child(even) { color: var(--coord-on-dark);
   padding: 2px 0;
   border-radius: 5px;
   background: var(--raised2);
-  font: 650 12.5px/1.4 "Cascadia Mono", Consolas, monospace;
+  font: 650 12.5px/1.4 "Cascadia Mono", Consolas, Menlo, monospace;
 }
 .line .score.pos { color: var(--pos); }
 .line .score.neg { color: var(--neg); }
@@ -381,7 +381,7 @@ coords.squares:nth-of-type(even) :nth-child(even) { color: var(--coord-on-dark);
   border: 1px solid var(--line-strong);
   border-bottom-width: 2px;
   border-radius: 4px;
-  font: 600 11px/1.6 "Segoe UI", sans-serif;
+  font: 600 11px/1.6 "Segoe UI", system-ui, sans-serif;
   color: var(--fg);
 }
 
@@ -407,7 +407,7 @@ coords.squares:nth-of-type(even) :nth-child(even) { color: var(--coord-on-dark);
 .theme-light .input { background: rgba(255, 255, 255, 0.8); }
 .input:focus { border-color: var(--accent); }
 textarea.input { height: auto; padding: 8px 9px; resize: vertical; }
-.mono { font-family: "Cascadia Mono", Consolas, monospace; font-size: 11.5px; }
+.mono { font-family: "Cascadia Mono", Consolas, Menlo, monospace; font-size: 11.5px; }
 .btn-row { display: flex; flex-wrap: wrap; gap: 6px; }
 .btn-row.end { justify-content: flex-end; }
 
@@ -423,7 +423,7 @@ textarea.input { height: auto; padding: 8px 9px; resize: vertical; }
   overflow: auto;
   border-radius: 8px;
   background: rgba(0, 0, 0, 0.28);
-  font: 11px/1.45 "Cascadia Mono", Consolas, monospace;
+  font: 11px/1.45 "Cascadia Mono", Consolas, Menlo, monospace;
   white-space: pre-wrap;
   word-break: break-all;
   user-select: text;
@@ -497,7 +497,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); margin: 0; }
 .hk:last-child { border-bottom: 0; }
 .hk-name { font-size: 12.5px; font-weight: 600; }
 .hk-name small { display: block; color: var(--muted); font-weight: 400; font-size: 11px; }
-.hk-key { min-width: 118px; height: 26px; padding: 0 8px; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--raised2); font: 600 11.5px "Segoe UI", sans-serif; }
+.hk-key { min-width: 118px; height: 26px; padding: 0 8px; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--raised2); font: 600 11.5px "Segoe UI", system-ui, sans-serif; }
 .hk-key.recording { border-color: var(--accent); color: var(--accent); }
 .hk-key.failed { border-color: var(--danger); color: var(--neg); }
 
@@ -520,7 +520,7 @@ details.s-card[open] > summary { border-bottom: 1px solid var(--line); }
 .compact-grip { display: grid; place-items: center; width: 26px; height: 100%; }
 .compact-main { flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 10px; height: 100%; align-items: center; }
 .compact-move { font-size: 26px; font-weight: 750; }
-.compact-eval { font: 650 14px/1.4 "Cascadia Mono", Consolas, monospace; padding: 0 7px; border-radius: 6px; background: var(--raised2); }
+.compact-eval { font: 650 14px/1.4 "Cascadia Mono", Consolas, Menlo, monospace; padding: 0 7px; border-radius: 6px; background: var(--raised2); }
 .compact-eval.pos { color: var(--pos); }
 .compact-eval.neg { color: var(--neg); }
 .compact-meta { color: var(--muted); font-size: 11px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }

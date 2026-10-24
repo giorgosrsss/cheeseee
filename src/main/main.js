@@ -10,6 +10,7 @@ const { EngineManager } = require('./engine-manager');
 const { movePieceOnScreen, stopClicker, getCursorPos } = require('./mouse-automation');
 
 const ROOT = path.join(__dirname, '..', '..');
+const IS_MAC = process.platform === 'darwin';
 const ICON = path.join(ROOT, 'assets', process.platform === 'win32' ? 'icon.ico' : 'icon.png');
 const smokeIdx = process.argv.indexOf('--smoke');
 const SMOKE_SCRIPT = smokeIdx > -1 ? process.argv[smokeIdx + 1] : null;
@@ -19,7 +20,7 @@ if (!SMOKE_SCRIPT && !app.requestSingleInstanceLock()) {
   process.exit(0);
 }
 
-app.setAppUserModelId('com.cheeseee.overlay');
+if (process.platform === 'win32') app.setAppUserModelId('com.cheeseee.overlay');
 
 let win = null;
 let tray = null;
@@ -161,7 +162,35 @@ function applyWindowSettings() {
       args: app.isPackaged ? [] : [path.resolve(ROOT)],
     });
   } catch (_) { /* not supported in this environment */ }
+  if (IS_MAC) applyMacWindowSettings(o);
   updateTray();
+}
+
+// macOS has a Dock instead of a taskbar, and a window only floats over fullscreen
+// apps when the app has no Dock icon. Only act on changes, since Dock calls are slow.
+const macState = { dockHidden: false, overFullscreen: false };
+function applyMacWindowSettings(o) {
+  const overFullscreen = !!o.alwaysOnTop && o.topLevel === 'screen-saver';
+  const hideDock = !!o.skipTaskbar || overFullscreen;
+  if (hideDock !== macState.dockHidden) {
+    macState.dockHidden = hideDock;
+    if (hideDock) app.dock.hide();
+    else Promise.resolve(app.dock.show()).catch(() => {});
+  }
+  if (overFullscreen !== macState.overFullscreen) {
+    macState.overFullscreen = overFullscreen;
+    win.setVisibleOnAllWorkspaces(overFullscreen, { visibleOnFullScreen: overFullscreen, skipTransformProcessType: true });
+  }
+}
+
+// Without an Edit menu, Cmd+C / Cmd+V don't work in text fields on macOS.
+// Electron's default menu would also add Cmd+R, which reloads the whole interface.
+function setupMacMenu() {
+  Menu.setApplicationMenu(Menu.buildFromTemplate([
+    { role: 'appMenu' },
+    { role: 'editMenu' },
+    { role: 'windowMenu' },
+  ]));
 }
 
 function sendWindowState() {
@@ -248,9 +277,21 @@ function updateTray() {
   tray.setContextMenu(menu);
 }
 
+function trayImage() {
+  if (!IS_MAC) return nativeImage.createFromPath(ICON);
+  // The menu bar wants an 18pt icon, plus a 2x version for Retina screens.
+  const src = nativeImage.createFromPath(path.join(ROOT, 'assets', 'icon.png'));
+  const img = nativeImage.createEmpty();
+  for (const scaleFactor of [1, 2]) {
+    const px = 18 * scaleFactor;
+    img.addRepresentation({ scaleFactor, buffer: src.resize({ width: px, height: px, quality: 'best' }).toPNG() });
+  }
+  return img;
+}
+
 function createTray() {
   try {
-    tray = new Tray(nativeImage.createFromPath(ICON));
+    tray = new Tray(trayImage());
     tray.setToolTip('Cheeseee chess overlay');
     tray.on('click', toggleVisible);
     updateTray();
@@ -457,7 +498,8 @@ function registerIpc() {
   ipcMain.handle('engine:add', async () => {
     const r = await dialog.showOpenDialog(win, {
       title: 'Choose a UCI chess engine',
-      filters: [{ name: 'Programs', extensions: ['exe'] }, { name: 'All files', extensions: ['*'] }],
+      // Mac engines have no file extension, so don't filter there.
+      ...(IS_MAC ? {} : { filters: [{ name: 'Programs', extensions: ['exe'] }, { name: 'All files', extensions: ['*'] }] }),
       properties: ['openFile'],
     });
     if (r.canceled || !r.filePaths[0]) return { canceled: true };
@@ -707,6 +749,10 @@ app.whenReady().then(() => {
   const userData = SMOKE_SCRIPT ? path.join(os.tmpdir(), 'cheeseee-smoke') : app.getPath('userData');
   store = new SettingsStore(path.join(userData, 'settings.json'));
   engines = new EngineManager(store, send);
+  if (IS_MAC) {
+    setupMacMenu();
+    if (!app.isPackaged) app.dock.setIcon(path.join(ROOT, 'assets', 'icon.png'));
+  }
   setupDisplayMediaHandler();
   registerIpc();
   createWindow();
@@ -726,3 +772,11 @@ app.on('will-quit', () => {
   globalShortcut.unregisterAll();
 });
 app.on('window-all-closed', () => app.quit());
+
+// macOS: clicking the Dock icon brings a hidden overlay back.
+app.on('activate', () => {
+  if (!win || win.isVisible()) return;
+  win.show();
+  sendWindowState();
+  updateTray();
+});

@@ -4,3 +4,5 @@ release/
 bin/
 *.log
 test_screen.png
+# Downloaded by scripts/get-stockfish.js (too big for GitHub)
+engines/stockfish/stockfish-macos

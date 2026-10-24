@@ -3,6 +3,8 @@ import { h, icon, getPath } from './dom.js';
 import { BOARD_THEMES, ACCENTS } from './themes.js';
 import { formatMs } from './format.js';
 
+const IS_MAC = window.api?.platform === 'darwin';
+
 const TIME_STEPS = [100, 250, 500, 750, 1000, 1500, 2000, 3000, 4000, 5000, 7000, 10000, 15000, 20000, 30000, 45000, 60000, 120000];
 const NODE_STEPS = [10000, 50000, 100000, 250000, 500000, 1e6, 2e6, 5e6, 1e7, 2e7, 5e7, 1e8, 5e8];
 
@@ -203,7 +205,9 @@ export function renderSettings(root, ctx) {
     toggle('overlay.alwaysOnTop', 'Always on top', 'Float above browser and other apps.'),
     seg('overlay.topLevel', 'Above fullscreen games', [
       ['floating', 'Normal'], ['screen-saver', 'Aggressive'],
-    ], 'Screen-saver level keeps the overlay above borderless-fullscreen games and apps.'),
+    ], IS_MAC
+      ? 'Aggressive keeps the overlay above fullscreen apps. macOS only allows this while the Dock icon is hidden.'
+      : 'Screen-saver level keeps the overlay above borderless-fullscreen games and apps.'),
     range('overlay.opacity', 'Window opacity', { min: 0.2, max: 1, step: 0.05, fmt: (v) => `${Math.round(v * 100)}%` },
       `Fades the whole overlay. Hotkeys: ${S.hotkeys.opacityUp || '-'} / ${S.hotkeys.opacityDown || '-'}`),
     range('overlay.panelOpacity', 'Background tint', { min: 0.2, max: 1, step: 0.05, fmt: (v) => `${Math.round(v * 100)}%` },
@@ -216,9 +220,13 @@ export function renderSettings(root, ctx) {
     colorSwatches('overlay.accent', 'Accent color', ACCENTS),
     range('overlay.zoom', 'Interface scale', { values: [0.8, 0.9, 1, 1.1, 1.25, 1.5], fmt: (v) => `${Math.round(v * 100)}%` }),
     toggle('overlay.lockPosition', 'Lock position and size', 'Prevents dragging or resizing the overlay window accidentally.'),
-    toggle('overlay.closeToTray', 'Close hides to tray', 'Closing the window keeps Cheeseee running in the system tray. Use tray → Quit to exit.'),
-    toggle('overlay.skipTaskbar', 'Hide from taskbar', 'Shows only in the system tray (near the clock).'),
-    toggle('overlay.startWithWindows', 'Start with Windows'),
+    IS_MAC
+      ? toggle('overlay.closeToTray', 'Close hides to menu bar', 'Closing the window keeps Cheeseee running in the menu bar. Use its menu → Quit, or Cmd+Q, to exit.')
+      : toggle('overlay.closeToTray', 'Close hides to tray', 'Closing the window keeps Cheeseee running in the system tray. Use tray → Quit to exit.'),
+    IS_MAC
+      ? toggle('overlay.skipTaskbar', 'Hide from Dock', 'Shows only in the menu bar.')
+      : toggle('overlay.skipTaskbar', 'Hide from taskbar', 'Shows only in the system tray (near the clock).'),
+    toggle('overlay.startWithWindows', IS_MAC ? 'Open at login' : 'Start with Windows'),
     toggle('overlay.startHidden', 'Start hidden to tray'),
     row('Lost the window?', h('button', { class: 'btn small', onclick: ctx.actions.resetPosition }, 'Move back on screen')),
   );

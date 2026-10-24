@@ -4,13 +4,23 @@ const fs = require('fs');
 const { app } = require('electron');
 const { UciEngine } = require('./engine');
 const { defaultThreads, defaultHash } = require('./defaults');
+const { builtinEngineFile } = require('./builtin-engine');
 
 const FLUSH_MS = 70;
 const RAW_FLUSH_MS = 120;
 
 function builtinEnginePath() {
+  const file = builtinEngineFile();
+  if (!file) return null;
   const base = app.isPackaged ? process.resourcesPath : path.join(__dirname, '..', '..');
-  return path.join(base, 'engines', 'stockfish', 'stockfish.exe');
+  return path.join(base, 'engines', 'stockfish', file);
+}
+
+function missingEngineMessage(cfg, p) {
+  if (!cfg.builtin) return `Engine file not found: ${p}`;
+  if (!p) return 'There is no bundled Stockfish for this system. Add a UCI engine in the Engine tab.';
+  if (!app.isPackaged) return `Stockfish isn't downloaded yet. Run "npm run engine" in the project folder, then restart. (${p})`;
+  return `Engine file not found: ${p}`;
 }
 
 class EngineManager {
@@ -85,8 +95,8 @@ class EngineManager {
     const cfg = this.cfg;
     const p = this.enginePath(cfg);
     this.status({ state: 'starting', name: cfg.name });
-    if (!fs.existsSync(p)) {
-      this.status({ state: 'error', name: cfg.name, message: `Engine file not found: ${p}` });
+    if (!p || !fs.existsSync(p)) {
+      this.status({ state: 'error', name: cfg.name, message: missingEngineMessage(cfg, p) });
       throw new Error('engine missing');
     }
     const eng = new UciEngine(p);

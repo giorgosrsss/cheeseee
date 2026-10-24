@@ -2,6 +2,7 @@
 const esbuild = require('esbuild');
 const fs = require('fs');
 const path = require('path');
+const { ensureEngine } = require('./get-stockfish');
 
 const root = path.join(__dirname, '..');
 const dist = path.join(root, 'dist');
@@ -69,6 +70,8 @@ const options = {
 };
 
 (async () => {
+  // Fetch Stockfish for this OS if it's missing (the macOS build isn't stored in the repo).
+  await ensureEngine().catch((err) => console.warn(`Warning: ${err.message}`));
   if (watch) {
     const ctx = await esbuild.context(options);
     await ctx.watch();
